@@ -1,0 +1,9 @@
+ALTER TABLE users
+ADD COLUMN role_id INT DEFAULT 4; -- Default to 'User'
+
+ALTER TABLE users
+ADD CONSTRAINT fk_role
+FOREIGN KEY (role_id)
+REFERENCES roles(id)
+ON DELETE SET NULL;
+

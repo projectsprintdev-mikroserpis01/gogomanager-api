@@ -1,0 +1,146 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  DBML_FILE: "./docs/schema.dbml"
+  DSN: "postgres://{{.DB_USER}}:{{.DB_PASS}}@{{.DB_HOST}}:{{.DB_PORT}}/{{.DB_NAME}}?sslmode=disable"
+
+dotenv:
+  - "./config/.env"
+
+tasks:
+  default:
+    desc: "Getting started"
+    cmds:
+      - task: install
+
+  install:
+    desc: "Install dependencies"
+    cmds:
+      - go mod download
+      - go install github.com/go-task/task/v3/cmd/task@latest
+      - go install github.com/air-verse/air@latest
+      - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+      - go install go.uber.org/mock/mockgen@latest
+      - go install gotest.tools/gotestsum@latest
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+  service:build:
+    desc: "Build services"
+    cmd: docker compose --env-file ./config/.env build
+
+  service:up:
+    desc: "Start services"
+    cmd: docker compose --env-file ./config/.env up -d
+
+  service:down:
+    desc: "Stop services"
+    cmd: docker compose down
+
+  service:logs:
+    desc: "Show logs"
+    cmd: docker compose logs -f
+
+  service:cache:clear:
+    desc: "Clear cache"
+    cmd: docker builder prune -f
+
+  service:db:connect:
+    desc: "Connect to database using command line interface"
+    cmd: docker exec -it postgresdb psql -U {{.DB_USER}} -d {{.DB_NAME}}
+    requires:
+      vars:
+        - DB_USER
+        - DB_NAME
+
+  db:seed:
+    desc: "Seed database"
+    cmd: go run ./cmd/seed/main.go -entity={{.CLI_ARGS}}
+    requires:
+      vars:
+        - CLI_ARGS
+
+  migrate:create:
+    desc: "Create new database migration"
+    cmd: migrate create -ext sql -dir ./database/migrations -seq {{.CLI_ARGS}}
+    requires:
+      vars:
+        - CLI_ARGS
+
+  migrate:up:
+    desc: "Run database migrations"
+    cmd: migrate -path ./database/migrations -database {{.DSN}} -verbose up {{.CLI_ARGS}}
+    requires:
+      vars:
+        - DSN
+
+  migrate:down:
+    desc: "Rollback database migrations"
+    cmd: migrate -path ./database/migrations -database {{.DSN}} -verbose down {{.CLI_ARGS}}
+    requires:
+      vars:
+        - DSN
+
+  migrate:force:
+    desc: "Force database migrations"
+    cmd: migrate -path ./database/migrations -database {{.DSN}} -verbose force {{.CLI_ARGS}}
+    requires:
+      vars:
+        - DSN
+
+  dev:
+    desc: "Start development server"
+    cmds:
+      - air
+
+  lint:
+    desc: "Run linter"
+    cmd: golangci-lint run ./...
+
+  build:
+    desc: "Build binary"
+    cmd: go build -o ./bin/{{.APP_NAME}} ./cmd/app/main.go
+    requires:
+      vars:
+        - APP_NAME
+
+  start:
+    desc: "Start binary"
+    cmd: ./bin/{{.APP_NAME}}
+    requires:
+      vars:
+        - APP_NAME
+
+  test:
+    desc: "Run tests"
+    cmds:
+      - go test -v ./tests/... -race -cover -timeout 30s -count 1 -coverprofile=coverage.out
+      - go tool cover -html=coverage.out -o coverage.html
+      - gotestsum --format testname
+
+  test:unit:
+    desc: "Run unit tests"
+    cmds:
+    - go test -v ./tests/unit/... -race -cover -timeout 30s -count 1
+
+  test:specific:
+    desc: "Run specific tests. Run task with CLI_ARGS=entity or CLI_ARGS=entity/{repository|service}"
+    cmd: go test -v ./tests/unit/{{.CLI_ARGS}}/... -race -cover -timeout 30s -count 1
+    requires:
+      vars:
+        - CLI_ARGS
+
+  gen-mock:repository:
+    desc: "Generate repo mock. Run task with CLI_ARGS=entity"
+    cmd: mockgen -source="domain/contracts/{{.CLI_ARGS}}_contracts.go" -destination="tests/unit/{{.CLI_ARGS}}/repository/mock/{{.CLI_ARGS}}_repository_mock.go" -package=repository_mock
+    requires:
+      vars:
+        - CLI_ARGS
+
+  gen-mock:pkg:
+    desc: "Generate pkg mock. Run task with CLI_ARGS=pkg"
+    cmd: mockgen -source="pkg/{{.CLI_ARGS}}/{{.CLI_ARGS}}.go" -destination="pkg/{{.CLI_ARGS}}/mock/{{.CLI_ARGS}}_mock.go" -package=mock
+    requires:
+      vars:
+        - CLI_ARGS
