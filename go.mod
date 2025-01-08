@@ -3,7 +3,6 @@ module github.com/projectsprintdev-mikroserpis01/gogomanager-api
 go 1.23.4
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/bytedance/sonic v1.12.3
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
@@ -16,7 +15,6 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
-	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.31.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
