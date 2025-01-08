@@ -5,6 +5,8 @@
 .env.staging
 .env.production
 
+config/.env
+
 # ignore air (live reload) files
 .air.toml
 tmp
