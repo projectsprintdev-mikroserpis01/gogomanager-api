@@ -77,3 +77,13 @@ var ErrRoleCantAccessResource = &RequestError{
 	StatusCode: http.StatusForbidden,
 	Err:        errors.New("role can't access resource"),
 }
+
+var ErrFileSizeLimitExceeded = &RequestError{
+	StatusCode: http.StatusBadRequest,
+	Err:        errors.New("file size limit exceeded"),
+}
+
+var ErrInvalidFileExtension = &RequestError{
+	StatusCode: http.StatusBadRequest,
+	Err:        errors.New("invalid file extension"),
+}

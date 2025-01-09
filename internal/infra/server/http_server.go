@@ -1,9 +1,13 @@
 package server
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain"
 	authCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/controller"
 	authRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/repository"
 	authSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/service"
@@ -17,6 +21,7 @@ import (
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/helpers/http/response"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/jwt"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/log"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/s3"
 	timePkg "github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/time"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/uuid"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/validator"
@@ -85,6 +90,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	uuid := uuid.UUID
 	validator := validator.Validator
 	jwt := jwt.Jwt
+	s3 := s3.S3
 
 	_ = middlewares.NewMiddleware(jwt)
 
@@ -107,6 +113,43 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 
 	userCtr.InitNewController(v1, userService)
 	authCtr.InitAuthController(v1, authService)
+
+	v1.Post("/file", func(c *fiber.Ctx) error {
+		file, err := c.FormFile("file")
+		if err != nil {
+			return err
+		}
+
+		extFileOptions := []string{"jpg", "jpeg", "png"}
+		maxSize := 100 * 1024 // 100 KiB
+
+		// check file extension
+		validExt := false
+		for _, ext := range extFileOptions {
+			if strings.Contains(filepath.Ext(file.Filename), ext) {
+				validExt = true
+				break
+			}
+		}
+
+		if !validExt {
+			return domain.ErrInvalidFileExtension
+		}
+
+		// check file size
+		if file.Size > int64(maxSize) {
+			return domain.ErrFileSizeLimitExceeded
+		}
+
+		uri, err := s3.Upload(file)
+		if err != nil {
+			return err
+		}
+
+		return response.SendResponse(c, fiber.StatusOK, fiber.Map{
+			"uri": uri,
+		})
+	})
 
 	s.app.Use(func(c *fiber.Ctx) error {
 		return c.SendFile("./web/not-found.html")
