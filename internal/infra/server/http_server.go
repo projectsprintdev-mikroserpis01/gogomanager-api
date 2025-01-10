@@ -114,10 +114,10 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	userCtr.InitNewController(v1, userService)
 	authCtr.InitAuthController(v1, authService)
 
-	v1.Post("/file", middleware.RequireAuth(), func(c *fiber.Ctx) error {
+	s.app.Post("/v1/file", middleware.RequireAuth(), func(c *fiber.Ctx) error {
 		file, err := c.FormFile("file")
 		if err != nil {
-			return err
+			return domain.ErrFileNotFound
 		}
 
 		extFileOptions := []string{"jpg", "jpeg", "png"}
@@ -146,7 +146,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 			return err
 		}
 
-		return response.SendResponse(c, fiber.StatusOK, fiber.Map{
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"uri": uri,
 		})
 	})
