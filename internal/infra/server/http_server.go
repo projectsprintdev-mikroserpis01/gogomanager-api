@@ -115,8 +115,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	authRepository := authRepo.NewAuthRepository(db)
 
 	// Initialize services
-	// managerService := userSvc.NewManagerService(managerRepo, "your_jwt_secret")
-	managerService := service.NewManagerService(managerRepo, jwtManager, bcrypt)
+	managerService := service.NewManagerService(managerRepo, jwtManager, bcrypt, validator)
 	userService := userSvc.NewUserService(userRepository, validator, uuid, bcrypt)
 	authService := authSvc.NewAuthService(authRepository, validator, uuid, jwt, bcrypt)
 

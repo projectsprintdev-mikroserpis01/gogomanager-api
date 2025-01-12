@@ -9,6 +9,7 @@ import (
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/repository"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/bcrypt"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/jwt"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/validator"
 )
 
 type ManagerService interface {
@@ -16,20 +17,32 @@ type ManagerService interface {
 }
 
 type managerService struct {
-	repo   repository.ManagerRepository
-	jwt    jwt.JwtManagerInterface
-	bcrypt bcrypt.BcryptInterface
+	repo      repository.ManagerRepository
+	jwt       jwt.JwtManagerInterface
+	bcrypt    bcrypt.BcryptInterface
+	validator validator.ValidatorInterface
 }
 
-func NewManagerService(repo repository.ManagerRepository, jwt jwt.JwtManagerInterface, bcrypt bcrypt.BcryptInterface) ManagerService {
+func NewManagerService(
+	repo repository.ManagerRepository,
+	jwt jwt.JwtManagerInterface,
+	bcrypt bcrypt.BcryptInterface,
+	validator validator.ValidatorInterface,
+) ManagerService {
 	return &managerService{
-		repo:   repo,
-		jwt:    jwt,
-		bcrypt: bcrypt,
+		repo:      repo,
+		jwt:       jwt,
+		bcrypt:    bcrypt,
+		validator: validator,
 	}
 }
 
 func (s *managerService) Authenticate(ctx context.Context, req dto.AuthRequest) (dto.AuthResponse, error) {
+	valErr := s.validator.Validate(req)
+	if valErr != nil {
+		return dto.AuthResponse{}, valErr
+	}
+
 	switch req.Action {
 	case "create":
 		exists, err := s.repo.EmailExists(ctx, req.Email)
