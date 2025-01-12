@@ -11,6 +11,9 @@ import (
 	authCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/controller"
 	authRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/repository"
 	authSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/service"
+	managerCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/controller"
+	managerRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/repository"
+	managerSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/service"
 	deptCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/controller"
 	deptRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/repository"
 	deptSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/service"
@@ -92,10 +95,11 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	_ = timePkg.Time
 	uuid := uuid.UUID
 	validator := validator.Validator
+	jwtManager := jwt.JwtManager
 	jwt := jwt.Jwt
 	s3 := s3.S3
 
-	middleware := middlewares.NewMiddleware(jwt)
+	middleware := middlewares.NewMiddleware(jwt, jwtManager)
 
 	s.app.Get("/", func(c *fiber.Ctx) error {
 		return response.SendResponse(c, fiber.StatusOK, "GoGoManager API")
@@ -108,56 +112,25 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 		return response.SendResponse(c, fiber.StatusOK, "GoGoManager API")
 	})
 
+	// Initialize repositories
+	managerRepo := managerRepo.NewManagerRepository(db)
 	userRepository := userRepo.NewUserRepository(db)
 	authRepository := authRepo.NewAuthRepository(db)
 	departmentRepository := deptRepo.NewDepartmentRepository(db)
 
+	// Initialize services
+	managerService := managerSvc.NewManagerService(managerRepo, jwtManager, bcrypt, validator)
 	userService := userSvc.NewUserService(userRepository, validator, uuid, bcrypt)
 	authService := authSvc.NewAuthService(authRepository, validator, uuid, jwt, bcrypt)
 	departmentService := deptSvc.NewDepartmentService(departmentRepository)
 
+	// Initialize controllers
+	managerCtr.InitManagerController(v1, managerService)
 	userCtr.InitNewController(v1, userService)
-	authCtr.InitAuthController(v1, authService)
+	authCtr.InitAuthController(s.app, authService)
 	deptCtr.InitNewController(v1, departmentService)
 
-	s.app.Post("/v1/file", middleware.RequireAuth(), func(c *fiber.Ctx) error {
-		file, err := c.FormFile("file")
-		if err != nil {
-			return domain.ErrFileNotFound
-		}
-
-		extFileOptions := []string{"jpg", "jpeg", "png"}
-		maxSize := 100 * 1024 // 100 KiB
-
-		// check file extension
-		validExt := false
-		for _, ext := range extFileOptions {
-			if strings.Contains(filepath.Ext(file.Filename), ext) {
-				validExt = true
-				break
-			}
-		}
-
-		if !validExt {
-			return domain.ErrInvalidFileExtension
-		}
-
-		// check file size
-		if file.Size > int64(maxSize) {
-			return domain.ErrFileSizeLimitExceeded
-		}
-
-		uri, err := s3.Upload(file)
-		if err != nil {
-			return err
-		}
-
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"uri": uri,
-		})
-	})
-
-	s.app.Post("/v1/file", middleware.RequireAuth(), func(c *fiber.Ctx) error {
+	s.app.Post("/v1/file", middleware.RequireAdmin(), func(c *fiber.Ctx) error {
 		file, err := c.FormFile("file")
 		if err != nil {
 			return domain.ErrFileNotFound
