@@ -1,0 +1,12 @@
+CREATE TABLE "departments" (
+		"id" SERIAL PRIMARY KEY,
+		"name" VARCHAR(255) NOT NULL,
+		"manager_id" INTEGER NOT NULL,
+		"created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE "departments"
+ADD CONSTRAINT fk_manager
+FOREIGN KEY (manager_id)
+REFERENCES managers(id)
+ON DELETE CASCADE;
