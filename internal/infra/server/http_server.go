@@ -14,6 +14,9 @@ import (
 	managerCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/controller"
 	managerRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/repository"
 	managerSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/service"
+	deptCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/controller"
+	deptRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/repository"
+	deptSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/service"
 	userCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/controller"
 	userRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/repository"
 	userSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/service"
@@ -113,16 +116,19 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	managerRepo := managerRepo.NewManagerRepository(db)
 	userRepository := userRepo.NewUserRepository(db)
 	authRepository := authRepo.NewAuthRepository(db)
+	departmentRepository := deptRepo.NewDepartmentRepository(db)
 
 	// Initialize services
 	managerService := managerSvc.NewManagerService(managerRepo, jwtManager, bcrypt, validator)
 	userService := userSvc.NewUserService(userRepository, validator, uuid, bcrypt)
 	authService := authSvc.NewAuthService(authRepository, validator, uuid, jwt, bcrypt)
+	departmentService := deptSvc.NewDepartmentService(departmentRepository)
 
 	// Initialize controllers
 	managerCtr.InitManagerController(v1, managerService)
 	userCtr.InitNewController(v1, userService)
 	authCtr.InitAuthController(s.app, authService)
+	deptCtr.InitNewController(v1, departmentService)
 
 	s.app.Post("/v1/file", middleware.RequireAdmin(), func(c *fiber.Ctx) error {
 		file, err := c.FormFile("file")
