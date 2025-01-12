@@ -6,23 +6,31 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain/contracts"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain/dto"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/middlewares"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/jwt"
 )
 
 type departmentController struct {
-	service contracts.DepartmentService
+	service    contracts.DepartmentService
+	middleware *middlewares.Middleware
 }
 
-func InitNewController(router fiber.Router, departmentService contracts.DepartmentService) {
+func InitNewController(
+	router fiber.Router,
+	departmentService contracts.DepartmentService,
+	middleware *middlewares.Middleware,
+) {
 	controller := &departmentController{
-		service: departmentService,
+		service:    departmentService,
+		middleware: middleware,
 	}
 
 	route := router.Group("/v1")
 
-	route.Post("/department", controller.Create)
-	route.Get("/department", controller.Get)
-	route.Patch("/department/:departmentid", controller.Update)
-	route.Delete("/department/:departmentid", controller.Delete)
+	route.Post("/department", middleware.RequireAdmin(), controller.Create)
+	route.Get("/department", middleware.RequireAdmin(), controller.Get)
+	route.Patch("/department/:departmentid", middleware.RequireAdmin(), controller.Update)
+	route.Delete("/department/:departmentid", middleware.RequireAdmin(), controller.Delete)
 }
 
 func (c *departmentController) Create(ctx *fiber.Ctx) error {
@@ -36,6 +44,9 @@ func (c *departmentController) Create(ctx *fiber.Ctx) error {
 			"error": "Invalid request body",
 		})
 	}
+
+	managerID := ctx.Locals("claims").(jwt.ClaimsManager).UserID
+	requestBody.ManagerID = managerID
 
 	departmentRes, err := c.service.Create(ctx.Context(), requestBody.ManagerID, requestBody.Name)
 	if err != nil {
