@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain/dto"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/service"
-	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/helpers/http/response"
 )
 
 type managerController struct {
@@ -35,5 +34,5 @@ func (mc *managerController) handleAuth(ctx *fiber.Ctx) error {
 	if req.Action == "create" {
 		status = fiber.StatusCreated
 	}
-	return response.SendResponse(ctx, status, res)
+	return ctx.Status(status).JSON(res)
 }
