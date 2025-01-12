@@ -7,6 +7,9 @@ import (
 	authCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/controller"
 	authRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/repository"
 	authSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/service"
+	deptCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/controller"
+	deptRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/repository"
+	deptSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/service"
 	userCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/controller"
 	userRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/repository"
 	userSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/service"
@@ -101,13 +104,15 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 
 	userRepository := userRepo.NewUserRepository(db)
 	authRepository := authRepo.NewAuthRepository(db)
+	departmentRepository := deptRepo.NewDepartmentRepository(db)
 
 	userService := userSvc.NewUserService(userRepository, validator, uuid, bcrypt)
 	authService := authSvc.NewAuthService(authRepository, validator, uuid, jwt, bcrypt)
+	departmentService := deptSvc.NewDepartmentService(departmentRepository)
 
 	userCtr.InitNewController(v1, userService)
 	authCtr.InitAuthController(v1, authService)
-
+	deptCtr.InitNewController(v1, departmentService)
 	s.app.Use(func(c *fiber.Ctx) error {
 		return c.SendFile("./web/not-found.html")
 	})
