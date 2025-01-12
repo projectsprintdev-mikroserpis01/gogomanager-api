@@ -47,12 +47,12 @@ func (s *managerService) Authenticate(ctx context.Context, req dto.AuthRequest) 
 		}
 
 		req.Password = hashedPassword
-		err = s.repo.CreateManager(ctx, req)
+		manager, err := s.repo.CreateManager(ctx, req)
 		if err != nil {
 			return dto.AuthResponse{}, err
 		}
 
-		token, err := s.jwt.CreateManager(req.Email)
+		token, err := s.jwt.CreateManager(manager.ID, manager.Email)
 		if err != nil {
 			return dto.AuthResponse{}, err
 		}
@@ -70,7 +70,7 @@ func (s *managerService) Authenticate(ctx context.Context, req dto.AuthRequest) 
 			return dto.AuthResponse{}, domain.ErrCredentialsNotMatch
 		}
 
-		token, err := s.jwt.CreateManager(req.Email)
+		token, err := s.jwt.CreateManager(manager.ID, req.Email)
 		if err != nil {
 			return dto.AuthResponse{}, err
 		}

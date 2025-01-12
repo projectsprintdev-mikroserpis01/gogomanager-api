@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -21,13 +22,14 @@ type Claims struct {
 }
 
 type JwtManagerInterface interface {
-	CreateManager(email string) (string, error)
-	DecodeManager(tokenString string, claims *Claims) error
+	CreateManager(userID int, email string) (string, error)
+	DecodeManager(tokenString string, claims *ClaimsManager) error
 }
 
 type ClaimsManager struct {
 	jwt.RegisteredClaims
-	Email string `json:"email"`
+	UserID int    `json:"user_id"`
+	Email  string `json:"email"`
 }
 
 type JwtStruct struct {
@@ -44,6 +46,15 @@ func getJwt() JwtInterface {
 	}
 }
 
+var JwtManager = getManagerJwt()
+
+func getManagerJwt() JwtManagerInterface {
+	return &JwtStruct{
+		SecretKey:   env.AppEnv.JwtSecretKey,
+		ExpiredTime: env.AppEnv.JwtExpTime,
+	}
+}
+
 func (j *JwtStruct) Create(userID uuid.UUID, roleName string) (string, error) {
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -53,7 +64,7 @@ func (j *JwtStruct) Create(userID uuid.UUID, roleName string) (string, error) {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.ExpiredTime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			ID:        uuid.New().String(),
+			ID:        userID.String(),
 		},
 		UserID:   userID,
 		RoleName: roleName,
@@ -84,7 +95,7 @@ func (j *JwtStruct) Decode(tokenString string, claims *Claims) error {
 	return nil
 }
 
-func (j *JwtStruct) CreateManager(email string) (string, error) {
+func (j *JwtStruct) CreateManager(userID int, email string) (string, error) {
 	claims := ClaimsManager{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "gogo-manager",
@@ -93,7 +104,7 @@ func (j *JwtStruct) CreateManager(email string) (string, error) {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.ExpiredTime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			ID:        uuid.New().String(),
+			ID:        strconv.Itoa(userID),
 		},
 		Email: email,
 	}
@@ -107,7 +118,7 @@ func (j *JwtStruct) CreateManager(email string) (string, error) {
 	return signedJWT, nil
 }
 
-func (j *JwtStruct) DecodeManager(tokenString string, claims *Claims) error {
+func (j *JwtStruct) DecodeManager(tokenString string, claims *ClaimsManager) error {
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(_ *jwt.Token) (any, error) {
 		return []byte(j.SecretKey), nil
 	})

@@ -10,7 +10,7 @@ import (
 
 type ManagerRepository interface {
 	EmailExists(ctx context.Context, email string) (bool, error)
-	CreateManager(ctx context.Context, req dto.AuthRequest) error
+	CreateManager(ctx context.Context, req dto.AuthRequest) (entity.Manager, error)
 	GetManagerByEmail(ctx context.Context, email string) (entity.Manager, error)
 }
 
@@ -30,9 +30,22 @@ func (r *managerRepository) EmailExists(ctx context.Context, email string) (bool
 	return exists, err
 }
 
-func (r *managerRepository) CreateManager(ctx context.Context, req dto.AuthRequest) error {
-	_, err := r.db.Exec("INSERT INTO managers (email, password) VALUES ($1, $2, $3)", req.Email, req.Password)
-	return err
+func (r *managerRepository) CreateManager(ctx context.Context, req dto.AuthRequest) (entity.Manager, error) {
+	_, err := r.db.Exec("INSERT INTO managers (email, password) VALUES ($1, $2)", req.Email, req.Password)
+	if err != nil {
+		return entity.Manager{}, err
+	}
+
+	return r.GetManagerByEmail(ctx, req.Email)
+}
+
+func (r *managerRepository) UpdateManager(ctx context.Context, req dto.ManagerProfile) (entity.Manager, error) {
+	_, err := r.db.Exec("UPDATE managers SET name = $1, user_image_uri = $2, company_name = $3, company_image_uri = $4 WHERE email = $5", req.Name, req.UserImageUri, req.CompanyName, req.CompanyImageUri, req.Email)
+	if err != nil {
+		return entity.Manager{}, err
+	}
+
+	return r.GetManagerByEmail(ctx, req.Email)
 }
 
 func (r *managerRepository) GetManagerByEmail(ctx context.Context, email string) (entity.Manager, error) {

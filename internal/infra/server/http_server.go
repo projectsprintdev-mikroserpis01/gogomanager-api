@@ -92,6 +92,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	_ = timePkg.Time
 	uuid := uuid.UUID
 	validator := validator.Validator
+	jwtManager := jwt.JwtManager
 	jwt := jwt.Jwt
 	s3 := s3.S3
 
@@ -115,7 +116,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 
 	// Initialize services
 	// managerService := userSvc.NewManagerService(managerRepo, "your_jwt_secret")
-	managerService := service.NewManagerService(managerRepo, jwt, bcrypt)
+	managerService := service.NewManagerService(managerRepo, jwtManager, bcrypt)
 	userService := userSvc.NewUserService(userRepository, validator, uuid, bcrypt)
 	authService := authSvc.NewAuthService(authRepository, validator, uuid, jwt, bcrypt)
 
