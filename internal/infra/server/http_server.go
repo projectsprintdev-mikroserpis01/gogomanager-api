@@ -11,9 +11,9 @@ import (
 	authCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/controller"
 	authRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/repository"
 	authSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/service"
-	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/controller"
-	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/repository"
-	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/service"
+	managerCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/controller"
+	managerRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/repository"
+	managerSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/service"
 	userCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/controller"
 	userRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/repository"
 	userSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/service"
@@ -110,17 +110,17 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	})
 
 	// Initialize repositories
-	managerRepo := repository.NewManagerRepository(db)
+	managerRepo := managerRepo.NewManagerRepository(db)
 	userRepository := userRepo.NewUserRepository(db)
 	authRepository := authRepo.NewAuthRepository(db)
 
 	// Initialize services
-	managerService := service.NewManagerService(managerRepo, jwtManager, bcrypt, validator)
+	managerService := managerSvc.NewManagerService(managerRepo, jwtManager, bcrypt, validator)
 	userService := userSvc.NewUserService(userRepository, validator, uuid, bcrypt)
 	authService := authSvc.NewAuthService(authRepository, validator, uuid, jwt, bcrypt)
 
 	// Initialize controllers
-	controller.InitManagerController(v1, managerService)
+	managerCtr.InitManagerController(v1, managerService)
 	userCtr.InitNewController(v1, userService)
 	authCtr.InitAuthController(s.app, authService)
 
