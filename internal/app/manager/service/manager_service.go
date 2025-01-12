@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain/dto"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/repository"
@@ -51,7 +52,7 @@ func (s *managerService) Authenticate(ctx context.Context, req dto.AuthRequest) 
 		}
 
 		if exists {
-			return dto.AuthResponse{}, errors.New("email already exists")
+			return dto.AuthResponse{}, fiber.NewError(fiber.StatusConflict, "email already exists")
 		}
 
 		hashedPassword, err := s.bcrypt.Hash(req.Password)
@@ -75,7 +76,7 @@ func (s *managerService) Authenticate(ctx context.Context, req dto.AuthRequest) 
 	case "login":
 		manager, err := s.repo.GetManagerByEmail(ctx, req.Email)
 		if err != nil {
-			return dto.AuthResponse{}, errors.New("email not found")
+			return dto.AuthResponse{}, fiber.NewError(fiber.StatusNotFound, "manager not found")
 		}
 
 		isValid := s.bcrypt.Compare(req.Password, manager.Password)
