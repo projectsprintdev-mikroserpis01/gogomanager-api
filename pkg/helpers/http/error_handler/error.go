@@ -12,7 +12,7 @@ import (
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	var valErr validator.ValidationErrors
 	if errors.As(err, &valErr) {
-		return response.SendResponse(c, fiber.StatusUnprocessableEntity, valErr)
+		return response.SendResponse(c, fiber.StatusBadRequest, valErr)
 	}
 
 	var reqErr *domain.RequestError
