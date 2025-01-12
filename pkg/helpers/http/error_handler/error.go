@@ -20,5 +20,10 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 		return response.SendResponse(c, reqErr.StatusCode, reqErr)
 	}
 
+	var fiberErr *fiber.Error
+	if errors.As(err, &fiberErr) {
+		return response.SendResponse(c, fiberErr.Code, fiberErr)
+	}
+
 	return response.SendResponse(c, fiber.StatusInternalServerError, err)
 }
