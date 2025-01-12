@@ -1,6 +1,9 @@
 package server
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
@@ -113,6 +116,44 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	userCtr.InitNewController(v1, userService)
 	authCtr.InitAuthController(v1, authService)
 	deptCtr.InitNewController(v1, departmentService)
+
+	s.app.Post("/v1/file", middleware.RequireAuth(), func(c *fiber.Ctx) error {
+		file, err := c.FormFile("file")
+		if err != nil {
+			return domain.ErrFileNotFound
+		}
+
+		extFileOptions := []string{"jpg", "jpeg", "png"}
+		maxSize := 100 * 1024 // 100 KiB
+
+		// check file extension
+		validExt := false
+		for _, ext := range extFileOptions {
+			if strings.Contains(filepath.Ext(file.Filename), ext) {
+				validExt = true
+				break
+			}
+		}
+
+		if !validExt {
+			return domain.ErrInvalidFileExtension
+		}
+
+		// check file size
+		if file.Size > int64(maxSize) {
+			return domain.ErrFileSizeLimitExceeded
+		}
+
+		uri, err := s3.Upload(file)
+		if err != nil {
+			return err
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"uri": uri,
+		})
+	})
+
 	s.app.Use(func(c *fiber.Ctx) error {
 		return c.SendFile("./web/not-found.html")
 	})
