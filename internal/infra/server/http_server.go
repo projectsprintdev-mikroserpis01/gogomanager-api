@@ -7,6 +7,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain"
 	authCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/controller"
 	authRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/repository"
 	authSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/service"
@@ -23,6 +24,7 @@ import (
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/helpers/http/response"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/jwt"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/log"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/s3"
 	timePkg "github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/time"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/uuid"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/validator"
@@ -91,8 +93,9 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	uuid := uuid.UUID
 	validator := validator.Validator
 	jwt := jwt.Jwt
+	s3 := s3.S3
 
-	_ = middlewares.NewMiddleware(jwt)
+	middleware := middlewares.NewMiddleware(jwt)
 
 	s.app.Get("/", func(c *fiber.Ctx) error {
 		return response.SendResponse(c, fiber.StatusOK, "GoGoManager API")
