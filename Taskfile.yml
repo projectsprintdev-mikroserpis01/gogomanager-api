@@ -70,7 +70,7 @@ tasks:
 
   migrate:up:
     desc: "Run database migrations"
-    cmd: migrate -path ./database/migrations -database {{.DSN}} -verbose up {{.CLI_ARGS}}
+    cmd: migrate -path ./database/migrations -database {{.DSN}} -verbose up {{.DB_NAME}}
     requires:
       vars:
         - DSN

@@ -11,6 +11,9 @@ import (
 	authCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/controller"
 	authRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/repository"
 	authSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/service"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/managers/controller"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/managers/repository"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/managers/service"
 	userCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/controller"
 	userRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/repository"
 	userSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/service"
@@ -105,12 +108,19 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 		return response.SendResponse(c, fiber.StatusOK, "GoGoManager API")
 	})
 
+	// Initialize repositories
+	managerRepo := repository.NewManagerRepository(db)
 	userRepository := userRepo.NewUserRepository(db)
 	authRepository := authRepo.NewAuthRepository(db)
 
+	// Initialize services
+	// managerService := userSvc.NewManagerService(managerRepo, "your_jwt_secret")
+	managerService := service.NewManagerService(managerRepo, validator)
 	userService := userSvc.NewUserService(userRepository, validator, uuid, bcrypt)
 	authService := authSvc.NewAuthService(authRepository, validator, uuid, jwt, bcrypt)
 
+	// Initialize controllers
+	controller.InitManagerController(v1, managerService)
 	userCtr.InitNewController(v1, userService)
 	authCtr.InitAuthController(v1, authService)
 

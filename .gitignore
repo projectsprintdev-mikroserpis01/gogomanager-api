@@ -4,6 +4,7 @@
 .env.local
 .env.staging
 .env.production
+.history
 
 config/.env
 
