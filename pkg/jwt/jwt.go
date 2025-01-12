@@ -17,6 +17,17 @@ type Claims struct {
 	jwt.RegisteredClaims
 	UserID   uuid.UUID `json:"user_id"`
 	RoleName string    `json:"role_name"`
+	Email    string    `json:"email"`
+}
+
+type JwtManagerInterface interface {
+	CreateManager(email string) (string, error)
+	DecodeManager(tokenString string, claims *Claims) error
+}
+
+type ClaimsManager struct {
+	jwt.RegisteredClaims
+	Email string `json:"email"`
 }
 
 type JwtStruct struct {
@@ -27,7 +38,6 @@ type JwtStruct struct {
 var Jwt = getJwt()
 
 func getJwt() JwtInterface {
-
 	return &JwtStruct{
 		SecretKey:   env.AppEnv.JwtSecretKey,
 		ExpiredTime: env.AppEnv.JwtExpTime,
@@ -59,6 +69,45 @@ func (j *JwtStruct) Create(userID uuid.UUID, roleName string) (string, error) {
 }
 
 func (j *JwtStruct) Decode(tokenString string, claims *Claims) error {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(_ *jwt.Token) (any, error) {
+		return []byte(j.SecretKey), nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if !token.Valid {
+		return jwt.ErrSignatureInvalid
+	}
+
+	return nil
+}
+
+func (j *JwtStruct) CreateManager(email string) (string, error) {
+	claims := ClaimsManager{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "gogo-manager",
+			Subject:   email,
+			Audience:  jwt.ClaimStrings{"gogo-manager"},
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.ExpiredTime)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			ID:        uuid.New().String(),
+		},
+		Email: email,
+	}
+
+	unsignedJWT := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedJWT, err := unsignedJWT.SignedString([]byte(j.SecretKey))
+	if err != nil {
+		return "", err
+	}
+
+	return signedJWT, nil
+}
+
+func (j *JwtStruct) DecodeManager(tokenString string, claims *Claims) error {
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(_ *jwt.Token) (any, error) {
 		return []byte(j.SecretKey), nil
 	})

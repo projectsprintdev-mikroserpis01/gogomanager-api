@@ -31,7 +31,7 @@ func (r *managerRepository) EmailExists(ctx context.Context, email string) (bool
 }
 
 func (r *managerRepository) CreateManager(ctx context.Context, req dto.AuthRequest) error {
-	_, err := r.db.Exec("INSERT INTO managers (email, password, name) VALUES ($1, $2, $3)", req.Email, req.Password, req.Name)
+	_, err := r.db.Exec("INSERT INTO managers (email, password) VALUES ($1, $2, $3)", req.Email, req.Password)
 	return err
 }
 
