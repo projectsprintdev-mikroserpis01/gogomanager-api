@@ -106,6 +106,7 @@ func (j *JwtStruct) CreateManager(userID int, email string) (string, error) {
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			ID:        strconv.Itoa(userID),
 		},
+		UserID: userID,
 		Email: email,
 	}
 
