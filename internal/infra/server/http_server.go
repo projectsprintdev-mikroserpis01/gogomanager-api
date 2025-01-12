@@ -125,7 +125,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	departmentService := deptSvc.NewDepartmentService(departmentRepository)
 
 	// Initialize controllers
-	managerCtr.InitManagerController(v1, managerService)
+	managerCtr.InitManagerController(s.app, managerService)
 	userCtr.InitNewController(v1, userService)
 	authCtr.InitAuthController(s.app, authService)
 	deptCtr.InitNewController(s.app, departmentService)
