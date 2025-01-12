@@ -122,7 +122,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	managerService := managerSvc.NewManagerService(managerRepo, jwtManager, bcrypt, validator)
 	userService := userSvc.NewUserService(userRepository, validator, uuid, bcrypt)
 	authService := authSvc.NewAuthService(authRepository, validator, uuid, jwt, bcrypt)
-	departmentService := deptSvc.NewDepartmentService(departmentRepository)
+	departmentService := deptSvc.NewDepartmentService(departmentRepository, validator)
 
 	// Initialize controllers
 	managerCtr.InitManagerController(s.app, managerService)

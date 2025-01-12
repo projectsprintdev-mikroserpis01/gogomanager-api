@@ -17,7 +17,7 @@ const (
 	queryDelete                 = "DELETE FROM departments WHERE id = $1"
 	queryFindAllWithLimitOffset = "SELECT * FROM departments LIMIT $1 OFFSET $2"
 	queryFindAll                = "SELECT * FROM departments"
-	queryFindByName             = "SELECT * FROM departments WHERE name ILIKE $1 ORDER BY name ASC"
+	queryFindByName             = "SELECT * FROM departments WHERE name ILIKE $1 ORDER BY name ASC LIMIT $2 OFFSET $3"
 	queryUpdate                 = "UPDATE departments SET name = $1 WHERE id = $2"
 )
 
@@ -56,11 +56,11 @@ func (repo *departmentRepository) FindAll(ctx context.Context) ([]*entity.Depart
 	return listDepartment, nil
 }
 
-func (repo *departmentRepository) FindByName(ctx context.Context, name string) ([]*entity.Department, error) {
+func (repo *departmentRepository) FindByName(ctx context.Context, name string, limit, offset int) ([]*entity.Department, error) {
 
 	var listDepartment []*entity.Department
 	searchTerm := "%" + name + "%"
-	err := repo.DB.SelectContext(ctx, &listDepartment, queryFindByName, searchTerm)
+	err := repo.DB.SelectContext(ctx, &listDepartment, queryFindByName, searchTerm, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -88,4 +88,15 @@ func (repo *departmentRepository) FindAllWithLimitOffset(ctx context.Context, li
 	}
 
 	return listDepartment, nil
+}
+
+func (repo *departmentRepository) FindByID(ctx context.Context, id int) (*entity.Department, error) {
+	var department entity.Department
+
+	err := repo.DB.GetContext(ctx, &department, "SELECT * FROM departments WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &department, nil
 }

@@ -30,7 +30,17 @@ func InitNewController(
 	route.Post("/department", middleware.RequireAdmin(), controller.Create)
 	route.Get("/department", middleware.RequireAdmin(), controller.Get)
 	route.Patch("/department/:departmentid", middleware.RequireAdmin(), controller.Update)
+	route.Patch("/department/", middleware.RequireAdmin(), func(ctx *fiber.Ctx) error {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Department ID is required",
+		})
+	})
 	route.Delete("/department/:departmentid", middleware.RequireAdmin(), controller.Delete)
+	route.Delete("/department/", middleware.RequireAdmin(), func(ctx *fiber.Ctx) error {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Department ID is required",
+		})
+	})
 }
 
 func (c *departmentController) Create(ctx *fiber.Ctx) error {
@@ -50,9 +60,7 @@ func (c *departmentController) Create(ctx *fiber.Ctx) error {
 
 	departmentRes, err := c.service.Create(ctx.Context(), requestBody.ManagerID, requestBody.Name)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return err
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(departmentRes)
@@ -71,22 +79,20 @@ func (c *departmentController) Update(ctx *fiber.Ctx) error {
 	departmentID := ctx.Params("departmentid")
 	id, err := strconv.Atoi(departmentID)
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "Invalid department ID",
 		})
 	}
 
 	departmentRes, err := c.service.Update(ctx.Context(), id, requestBody.Name)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(departmentRes)
 }
 func (c *departmentController) Get(ctx *fiber.Ctx) error {
-	limit, err := strconv.Atoi(ctx.Query("limit", "0"))
+	limit, err := strconv.Atoi(ctx.Query("limit", "5"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid limit query parameter",
@@ -104,21 +110,7 @@ func (c *departmentController) Get(ctx *fiber.Ctx) error {
 
 	var departmentRes []dto.DepartmentRes
 
-	if limit == 0 && offset == 0 && name == "" {
-		departments, err := c.service.FindAll(ctx.Context(), 0, 0)
-		if err != nil {
-			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-
-		for _, dept := range departments {
-			departmentRes = append(departmentRes, dto.DepartmentRes{
-				ID:   dept.ID,
-				Name: dept.Name,
-			})
-		}
-	} else if name != "" {
+	if name != "" {
 		departments, err := c.service.FindByName(ctx.Context(), limit, offset, name)
 		if err != nil {
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -132,7 +124,7 @@ func (c *departmentController) Get(ctx *fiber.Ctx) error {
 				Name: dept.Name,
 			})
 		}
-	} else if limit > 0 && offset > 0 {
+	} else {
 		departments, err := c.service.FindAll(ctx.Context(), limit, offset)
 		if err != nil {
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -148,25 +140,21 @@ func (c *departmentController) Get(ctx *fiber.Ctx) error {
 		}
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"departments": departmentRes,
-	})
+	return ctx.Status(fiber.StatusOK).JSON(departmentRes)
 }
 
 func (c *departmentController) Delete(ctx *fiber.Ctx) error {
 	departmentID := ctx.Params("departmentid")
 	id, err := strconv.Atoi(departmentID)
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "Invalid department ID",
 		})
 	}
 
 	err = c.service.Delete(ctx.Context(), id)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{

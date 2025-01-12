@@ -9,7 +9,8 @@ import (
 
 type DepartmentRepository interface {
 	Create(ctx context.Context, data entity.Department) (int, error)
-	FindByName(ctx context.Context, name string) ([]*entity.Department, error)
+	FindByName(ctx context.Context, name string, limit, offset int) ([]*entity.Department, error)
+	FindByID(ctx context.Context, id int) (*entity.Department, error)
 	FindAll(ctx context.Context) ([]*entity.Department, error)
 	FindAllWithLimitOffset(ctx context.Context, limit, offset int) ([]*entity.Department, error)
 	Update(ctx context.Context, id int, newName string) (int, error)
