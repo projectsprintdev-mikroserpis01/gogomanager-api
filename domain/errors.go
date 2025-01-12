@@ -92,3 +92,8 @@ var ErrFileNotFound = &RequestError{
 	StatusCode: http.StatusBadRequest,
 	Err:        errors.New("file not found"),
 }
+
+var ErrInvalidMimeType = &RequestError{
+	StatusCode: http.StatusBadRequest,
+	Err:        errors.New("invalid mime type"),
+}
