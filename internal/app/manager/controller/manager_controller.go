@@ -23,7 +23,7 @@ func InitManagerController(router fiber.Router, managerService service.ManagerSe
 func (mc *managerController) handleAuth(ctx *fiber.Ctx) error {
 	var req dto.AuthRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		return err
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	res, err := mc.managerService.Authenticate(ctx.Context(), req)
