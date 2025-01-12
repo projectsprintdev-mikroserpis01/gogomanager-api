@@ -96,7 +96,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	jwt := jwt.Jwt
 	s3 := s3.S3
 
-	middleware := middlewares.NewMiddleware(jwt)
+	middleware := middlewares.NewMiddleware(jwt, jwtManager)
 
 	s.app.Get("/", func(c *fiber.Ctx) error {
 		return response.SendResponse(c, fiber.StatusOK, "GoGoManager API")
@@ -125,7 +125,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	userCtr.InitNewController(v1, userService)
 	authCtr.InitAuthController(s.app, authService)
 
-	s.app.Post("/v1/file", middleware.RequireAuth(), func(c *fiber.Ctx) error {
+	s.app.Post("/v1/file", middleware.RequireAdmin(), func(c *fiber.Ctx) error {
 		file, err := c.FormFile("file")
 		if err != nil {
 			return domain.ErrFileNotFound
