@@ -23,23 +23,12 @@ func InitManagerController(router fiber.Router, managerService service.ManagerSe
 func (mc *managerController) handleAuth(ctx *fiber.Ctx) error {
 	var req dto.AuthRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		return response.SendResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
+		return err
 	}
 
 	res, err := mc.managerService.Authenticate(ctx.Context(), req)
 	if err != nil {
-		switch err.Error() {
-		case "email already exists":
-			return response.SendResponse(ctx, fiber.StatusConflict, err.Error())
-		case "email not found":
-			return response.SendResponse(ctx, fiber.StatusNotFound, err.Error())
-		case "invalid password":
-			return response.SendResponse(ctx, fiber.StatusUnauthorized, err.Error())
-		case "invalid action":
-			return response.SendResponse(ctx, fiber.StatusBadRequest, err.Error())
-		default:
-			return response.SendResponse(ctx, fiber.StatusInternalServerError, err.Error())
-		}
+		return err
 	}
 
 	status := fiber.StatusOK
