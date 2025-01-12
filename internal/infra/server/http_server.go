@@ -123,7 +123,7 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	// Initialize controllers
 	controller.InitManagerController(v1, managerService)
 	userCtr.InitNewController(v1, userService)
-	authCtr.InitAuthController(v1, authService)
+	authCtr.InitAuthController(s.app, authService)
 
 	s.app.Post("/v1/file", middleware.RequireAuth(), func(c *fiber.Ctx) error {
 		file, err := c.FormFile("file")
