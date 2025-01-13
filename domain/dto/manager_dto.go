@@ -11,17 +11,17 @@ type GetCurrentManagerResponse struct {
 	CompanyImageUri string `db:"company_image_uri" json:"companyImageUri"`
 }
 type UpdateManagerRequest struct {
-	Email           *string `json:"email" validate:"email"`
-	Name            *string `json:"name" validate:"min=4,max=100,ascii"`
-	UserImageUri    *string `json:"userImageUri" validate:"url"`
-	CompanyName     *string `json:"companyName" validate:"min=4,max=52,ascii"`
-	CompanyImageUri *string `json:"companyImageUri" validate:"url"`
+	Email           string `json:"email" validate:"email"`
+	Name            string `json:"name" validate:"min=4,max=100,ascii"`
+	UserImageUri    string `json:"userImageUri" validate:"url"`
+	CompanyName     string `json:"companyName" validate:"min=4,max=52,ascii"`
+	CompanyImageUri string `json:"companyImageUri" validate:"url"`
 }
 
 type UpdateManagerResponse struct {
-	Email           *string `json:"email"`
-	Name            *string `json:"name"`
-	UserImageUri    *string `json:"userImageUri"`
-	CompanyName     *string `json:"companyName"`
-	CompanyImageUri *string `json:"companyImageUri"`
+	Email           string `json:"email"`
+	Name            string `json:"name"`
+	UserImageUri    string `json:"userImageUri"`
+	CompanyName     string `json:"companyName"`
+	CompanyImageUri string `json:"companyImageUri"`
 }

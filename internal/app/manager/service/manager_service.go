@@ -16,6 +16,8 @@ import (
 
 type ManagerService interface {
 	Authenticate(ctx context.Context, req dto.AuthRequest) (dto.AuthResponse, error)
+	GetManagerById(ctx context.Context, id int) (*dto.GetCurrentManagerResponse, error)
+	UpdateManagerById(ctx context.Context, id int, req dto.UpdateManagerRequest) (*dto.UpdateManagerResponse, error)
 }
 
 type managerService struct {
@@ -104,12 +106,12 @@ func (s *managerService) GetManagerById(ctx context.Context, id int) (*dto.GetCu
 		return nil, err
 	}
 
-	ret := dto.GetCurrentManagerResponse{Email: manager.Email, Name: manager.Name, UserImageUri: manager.UserImageUri, CompanyName: manager.CompanyName, CompanyImageUri: manager.CompanyImageUri}
+	ret := dto.GetCurrentManagerResponse{Email: manager.Email, Name: *manager.Name, UserImageUri: *manager.UserImageURI, CompanyName: *manager.CompanyName, CompanyImageUri: *manager.CompanyImageURI}
 	return &ret, nil
 }
 
 func (s *managerService) UpdateManagerById(ctx context.Context, id int, req dto.UpdateManagerRequest) (*dto.UpdateManagerResponse, error) {
-	rowsAffected, err := s.repo.UpdateManagerById(ctx, id, req)
+	rowsAffected, err := s.repo.UpdateManagerById(ctx, id, req.Email, req.Name, req.UserImageUri, req.CompanyName, req.CompanyImageUri)
 	if err != nil {
 		return nil, err
 	}

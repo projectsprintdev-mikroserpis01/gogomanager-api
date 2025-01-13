@@ -11,12 +11,12 @@ import (
 	authCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/controller"
 	authRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/repository"
 	authSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/auth/service"
-	managerCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/controller"
-	managerRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/repository"
-	managerSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/service"
 	deptCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/controller"
 	deptRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/repository"
 	deptSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/department/service"
+	managerCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/controller"
+	managerRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/repository"
+	managerSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/service"
 	userCtr "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/controller"
 	userRepo "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/repository"
 	userSvc "github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/user/service"
@@ -117,14 +117,12 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	userRepository := userRepo.NewUserRepository(db)
 	authRepository := authRepo.NewAuthRepository(db)
 	departmentRepository := deptRepo.NewDepartmentRepository(db)
-	managerRepository := managerRepo.NewManagerRepository(db)
 
 	// Initialize services
 	managerService := managerSvc.NewManagerService(managerRepo, jwtManager, bcrypt, validator)
 	userService := userSvc.NewUserService(userRepository, validator, uuid, bcrypt)
 	authService := authSvc.NewAuthService(authRepository, validator, uuid, jwt, bcrypt)
 	departmentService := deptSvc.NewDepartmentService(departmentRepository, validator)
-	managerService := managerSvc.NewManagerService(managerRepository, validator)
 
 	// Initialize controllers
 	managerCtr.InitManagerController(s.app, managerService)
@@ -132,7 +130,6 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	authCtr.InitAuthController(s.app, authService)
 	deptCtr.InitNewController(s.app, departmentService, middleware)
 	authCtr.InitAuthController(v1, authService)
-	managerCtr.InitNewController(v1, managerService)
 
 	s.app.Post("/v1/file", middleware.RequireAdmin(), func(c *fiber.Ctx) error {
 		file, err := c.FormFile("file")

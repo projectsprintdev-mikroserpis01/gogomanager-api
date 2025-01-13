@@ -9,7 +9,7 @@ import (
 
 type ManagerRepository interface {
 	GetManagerById(ctx context.Context, id int) (*entity.Manager, error)
-	UpdateManagerById(ctx context.Context, id int, req dto.UpdateManagerRequest) (int, error)
+	UpdateManagerById(ctx context.Context, id int, email string, name string, userImageUri string, companyName string, companyImageUri string) (int, error)
 }
 
 type ManagerService interface {
