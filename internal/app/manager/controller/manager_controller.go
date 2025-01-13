@@ -25,7 +25,7 @@ func InitManagerController(router fiber.Router, managerService service.ManagerSe
 
 	middleware := middlewares.NewMiddleware(jwt, jwtManager)
 
-	managerRoute := router.Group("/user")
+	managerRoute := router.Group("/v1/user")
 	managerRoute.Get("/", middleware.RequireAuth(), controller.GetManagerById)
 	managerRoute.Patch("/", middleware.RequireAuth(), controller.UpdateManagerById)
 }
