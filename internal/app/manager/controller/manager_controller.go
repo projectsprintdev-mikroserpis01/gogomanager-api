@@ -4,6 +4,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain/dto"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/service"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/middlewares"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/jwt"
 )
 
 type managerController struct {
@@ -17,6 +19,15 @@ func InitManagerController(router fiber.Router, managerService service.ManagerSe
 
 	authGroup := router.Group("/v1/auth")
 	authGroup.Post("/", controller.handleAuth)
+
+	jwtManager := jwt.JwtManager
+	jwt := jwt.Jwt
+
+	middleware := middlewares.NewMiddleware(jwt, jwtManager)
+
+	managerRoute := router.Group("/user")
+	managerRoute.Get("/", middleware.RequireAuth(), controller.GetManagerById)
+	managerRoute.Patch("/", middleware.RequireAuth(), controller.UpdateManagerById)
 }
 
 func (mc *managerController) handleAuth(ctx *fiber.Ctx) error {
@@ -35,4 +46,56 @@ func (mc *managerController) handleAuth(ctx *fiber.Ctx) error {
 		status = fiber.StatusCreated
 	}
 	return ctx.Status(status).JSON(res)
+
+}
+
+func (mc *managerController) GetManagerById(ctx *fiber.Ctx) error {
+	var requestBody dto.GetCurrentManagerRequest
+	if err := ctx.BodyParser(&requestBody); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	token := ctx.Get("Authorization")
+	var claims jwt.ClaimsManager
+	if err := jwt.JwtManager.DecodeManager(token, &claims); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	res, err := mc.managerService.GetManagerById(ctx.Context(), claims.UserID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(res)
+}
+
+func (mc *managerController) UpdateManagerById(ctx *fiber.Ctx) error {
+	var requestBody dto.UpdateManagerRequest
+	if err := ctx.BodyParser(&requestBody); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	token := ctx.Get("Authorization")
+	var claims jwt.ClaimsManager
+	if err := jwt.JwtManager.DecodeManager(token, &claims); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	res, err := mc.managerService.UpdateManagerById(ctx.Context(), claims.UserID, requestBody)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(res)
 }
