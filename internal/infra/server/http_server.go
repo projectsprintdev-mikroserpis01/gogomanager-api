@@ -151,11 +151,6 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 			return domain.ErrFileSizeLimitExceeded
 		}
 
-		// check mime type
-		if !strings.Contains(file.Header.Get("Content-Type"), "image") {
-			return domain.ErrInvalidMimeType
-		}
-
 		uri, err := s3.Upload(file)
 		if err != nil {
 			return err
