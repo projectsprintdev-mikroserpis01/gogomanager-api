@@ -65,9 +65,7 @@ func (mc *managerController) GetManagerById(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// TODO:
-	var id int
-	res, err := mc.managerService.GetManagerById(ctx.Context(), id)
+	res, err := mc.managerService.GetManagerById(ctx.Context(), claims.UserID)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -86,17 +84,14 @@ func (mc *managerController) UpdateManagerById(ctx *fiber.Ctx) error {
 	}
 
 	token := ctx.Get("Authorization")
-	var claims jwt.Claims
-	if err := jwt.Jwt.Decode(token, &claims); err != nil {
+	var claims jwt.ClaimsManager
+	if err := jwt.JwtManager.DecodeManager(token, &claims); err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	// TODO:
-	var id int
-
-	res, err := mc.managerService.UpdateManagerById(ctx.Context(), id, requestBody)
+	res, err := mc.managerService.UpdateManagerById(ctx.Context(), claims.UserID, requestBody)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
