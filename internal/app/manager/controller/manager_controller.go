@@ -26,8 +26,8 @@ func InitManagerController(router fiber.Router, managerService service.ManagerSe
 	middleware := middlewares.NewMiddleware(jwt, jwtManager)
 
 	managerRoute := router.Group("/v1/user")
-	managerRoute.Get("/", middleware.RequireAuth(), controller.GetManagerById)
-	managerRoute.Patch("/", middleware.RequireAuth(), controller.UpdateManagerById)
+	managerRoute.Get("/", middleware.RequireAdmin(), controller.GetManagerById)
+	managerRoute.Patch("/", middleware.RequireAdmin(), controller.UpdateManagerById)
 }
 
 func (mc *managerController) handleAuth(ctx *fiber.Ctx) error {
@@ -50,26 +50,11 @@ func (mc *managerController) handleAuth(ctx *fiber.Ctx) error {
 }
 
 func (mc *managerController) GetManagerById(ctx *fiber.Ctx) error {
-	var requestBody dto.GetCurrentManagerRequest
-	if err := ctx.BodyParser(&requestBody); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
+	managerID := ctx.Locals("claims").(jwt.ClaimsManager).UserID
 
-	token := ctx.Get("Authorization")
-	var claims jwt.ClaimsManager
-	if err := jwt.JwtManager.DecodeManager(token, &claims); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	res, err := mc.managerService.GetManagerById(ctx.Context(), claims.UserID)
+	res, err := mc.managerService.GetManagerById(ctx.Context(), managerID)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(res)
@@ -83,19 +68,11 @@ func (mc *managerController) UpdateManagerById(ctx *fiber.Ctx) error {
 		})
 	}
 
-	token := ctx.Get("Authorization")
-	var claims jwt.ClaimsManager
-	if err := jwt.JwtManager.DecodeManager(token, &claims); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
+	managerID := ctx.Locals("claims").(jwt.ClaimsManager).UserID
 
-	res, err := mc.managerService.UpdateManagerById(ctx.Context(), claims.UserID, requestBody)
+	_, err := mc.managerService.UpdateManagerById(ctx.Context(), managerID, requestBody)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return err
 	}
-	return ctx.Status(fiber.StatusOK).JSON(res)
+	return ctx.Status(fiber.StatusOK).JSON(requestBody)
 }

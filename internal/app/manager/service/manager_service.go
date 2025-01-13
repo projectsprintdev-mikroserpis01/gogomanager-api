@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
-	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain"
@@ -11,6 +13,7 @@ import (
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/repository"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/bcrypt"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/jwt"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/log"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/pkg/validator"
 )
 
@@ -106,18 +109,103 @@ func (s *managerService) GetManagerById(ctx context.Context, id int) (*dto.GetCu
 		return nil, err
 	}
 
-	ret := dto.GetCurrentManagerResponse{Email: manager.Email, Name: *manager.Name, UserImageUri: *manager.UserImageURI, CompanyName: *manager.CompanyName, CompanyImageUri: *manager.CompanyImageURI}
+	ret := dto.GetCurrentManagerResponse{Email: manager.Email, Name: manager.Name, UserImageUri: manager.UserImageURI, CompanyName: manager.CompanyName, CompanyImageUri: manager.CompanyImageURI}
 	return &ret, nil
 }
 
 func (s *managerService) UpdateManagerById(ctx context.Context, id int, req dto.UpdateManagerRequest) (*dto.UpdateManagerResponse, error) {
-	rowsAffected, err := s.repo.UpdateManagerById(ctx, id, req.Email, req.Name, req.UserImageUri, req.CompanyName, req.CompanyImageUri)
+	valErr := s.validator.Validate(req)
+	if valErr != nil {
+		return nil, valErr
+	}
+
+	if req.Email != nil {
+		manager, err := s.repo.GetManagerByEmail(ctx, *req.Email)
+		if err == nil { // found a manager with the same email
+			if manager.ID != id {
+				log.Info(log.LogInfo{
+					"manager id": manager.ID,
+					"id":         id,
+				}, "[managerService.UpdateManagerById] id")
+
+				return nil, domain.ErrUserEmailAlreadyExists
+			}
+		}
+
+		if err != nil && !errors.Is(err, sql.ErrNoRows) { // some other error occurred
+			return nil, err
+		}
+	}
+
+	log.Info(log.LogInfo{
+		"is req user image uri nil": req.UserImageUri == nil,
+	}, "[managerService.UpdateManagerById] id")
+
+	if req.UserImageUri != nil {
+		u, err := url.ParseRequestURI(*req.UserImageUri)
+		if err != nil {
+			return nil, fiber.NewError(fiber.StatusBadRequest, "invalid user image uri")
+		}
+
+		if u.Scheme == "" || u.Host == "" {
+			return nil, fiber.NewError(fiber.StatusBadRequest, "invalid user image uri")
+		}
+
+		// Additional validation: Check if the host contains a domain or is not empty
+		if !strings.Contains(u.Host, ".") {
+			return nil, fiber.NewError(fiber.StatusBadRequest, "invalid company image uri")
+		}
+	}
+
+	if req.CompanyImageUri != nil {
+		u, err := url.ParseRequestURI(*req.CompanyImageUri)
+		if err != nil {
+			return nil, fiber.NewError(fiber.StatusBadRequest, "invalid company image uri")
+		}
+
+		log.Info(log.LogInfo{
+			"url": u,
+		}, "[managerService.UpdateManagerById] company image uri")
+
+		if u.Scheme == "" || u.Host == "" {
+			return nil, fiber.NewError(fiber.StatusBadRequest, "invalid company image uri")
+		}
+
+		// Additional validation: Check if the host contains a domain or is not empty
+		if !strings.Contains(u.Host, ".") {
+			return nil, fiber.NewError(fiber.StatusBadRequest, "invalid company image uri")
+		}
+	}
+
+	fields := []string{}
+	args := []interface{}{}
+	if req.Email != nil {
+		fields = append(fields, "email")
+		args = append(args, *req.Email)
+	}
+	if req.Name != nil {
+		fields = append(fields, "name")
+		args = append(args, *req.Name)
+	}
+	if req.UserImageUri != nil {
+		fields = append(fields, "user_image_uri")
+		args = append(args, *req.UserImageUri)
+	}
+	if req.CompanyName != nil {
+		fields = append(fields, "company_name")
+		args = append(args, *req.CompanyName)
+	}
+	if req.CompanyImageUri != nil {
+		fields = append(fields, "company_image_uri")
+		args = append(args, *req.CompanyImageUri)
+	}
+
+	_, err := s.repo.UpdateManagerByIDSomeFields(ctx, id, fields, args)
 	if err != nil {
 		return nil, err
 	}
-	if rowsAffected == 0 {
-		return nil, fmt.Errorf("manager with ID %d not found", id)
-	}
-	ret := dto.UpdateManagerResponse{Email: req.Email, Name: req.Name, UserImageUri: req.UserImageUri, CompanyName: req.CompanyName, CompanyImageUri: req.CompanyImageUri}
+
+	ret := dto.UpdateManagerResponse{}
+
 	return &ret, nil
 }
