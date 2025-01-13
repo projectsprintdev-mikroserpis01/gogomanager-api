@@ -74,11 +74,7 @@ func (d departmentService) FindAll(ctx context.Context, limit int, offset int) (
 	var departments []*entity.Department
 	var err error
 
-	if limit == 0 || offset == 0 {
-		departments, err = d.repo.FindAll(ctx)
-	} else {
-		departments, err = d.repo.FindAllWithLimitOffset(ctx, limit, offset)
-	}
+	departments, err = d.repo.FindAllWithLimitOffset(ctx, limit, offset)
 
 	if err != nil {
 		return nil, err
