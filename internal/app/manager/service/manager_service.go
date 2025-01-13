@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain"
@@ -94,4 +95,27 @@ func (s *managerService) Authenticate(ctx context.Context, req dto.AuthRequest) 
 	default:
 		return dto.AuthResponse{}, errors.New("invalid action")
 	}
+
+}
+
+func (s *managerService) GetManagerById(ctx context.Context, id int) (*dto.GetCurrentManagerResponse, error) {
+	manager, err := s.repo.GetManagerById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := dto.GetCurrentManagerResponse{Email: manager.Email, Name: manager.Name, UserImageUri: manager.UserImageUri, CompanyName: manager.CompanyName, CompanyImageUri: manager.CompanyImageUri}
+	return &ret, nil
+}
+
+func (s *managerService) UpdateManagerById(ctx context.Context, id int, req dto.UpdateManagerRequest) (*dto.UpdateManagerResponse, error) {
+	rowsAffected, err := s.repo.UpdateManagerById(ctx, id, req)
+	if err != nil {
+		return nil, err
+	}
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("manager with ID %d not found", id)
+	}
+	ret := dto.UpdateManagerResponse{Email: req.Email, Name: req.Name, UserImageUri: req.UserImageUri, CompanyName: req.CompanyName, CompanyImageUri: req.CompanyImageUri}
+	return &ret, nil
 }

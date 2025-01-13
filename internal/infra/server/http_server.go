@@ -117,18 +117,22 @@ func (s *httpServer) MountRoutes(db *sqlx.DB) {
 	userRepository := userRepo.NewUserRepository(db)
 	authRepository := authRepo.NewAuthRepository(db)
 	departmentRepository := deptRepo.NewDepartmentRepository(db)
+	managerRepository := managerRepo.NewManagerRepository(db)
 
 	// Initialize services
 	managerService := managerSvc.NewManagerService(managerRepo, jwtManager, bcrypt, validator)
 	userService := userSvc.NewUserService(userRepository, validator, uuid, bcrypt)
 	authService := authSvc.NewAuthService(authRepository, validator, uuid, jwt, bcrypt)
 	departmentService := deptSvc.NewDepartmentService(departmentRepository, validator)
+	managerService := managerSvc.NewManagerService(managerRepository, validator)
 
 	// Initialize controllers
 	managerCtr.InitManagerController(s.app, managerService)
 	userCtr.InitNewController(v1, userService)
 	authCtr.InitAuthController(s.app, authService)
 	deptCtr.InitNewController(s.app, departmentService, middleware)
+	authCtr.InitAuthController(v1, authService)
+	managerCtr.InitNewController(v1, managerService)
 
 	s.app.Post("/v1/file", middleware.RequireAdmin(), func(c *fiber.Ctx) error {
 		file, err := c.FormFile("file")
