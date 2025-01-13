@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain/dto"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain/entity"
 )
@@ -63,6 +64,11 @@ func (r *managerRepository) GetManagerById(ctx context.Context, id int) (*entity
 }
 
 func (r *managerRepository) UpdateManagerById(ctx context.Context, id int, email string, name string, userImageUri string, companyName string, companyImageUri string) (int, error) {
+
+	_, err := r.GetManagerByEmail(ctx, email)
+	if err == nil { // successfully found a manager with the same email
+		return 0, domain.ErrUserEmailAlreadyExists
+	}
 	result, err := r.db.ExecContext(ctx, "UPDATE managers SET name = $1, user_image_uri = $2, company_name = $3, company_image_uri = $4 WHERE id = $5", name, userImageUri, companyName, companyImageUri, id)
 	if err != nil {
 		return 0, err
