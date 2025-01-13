@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/lib/pq"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/domain/dto"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/app/manager/service"
 	"github.com/projectsprintdev-mikroserpis01/gogomanager-api/internal/middlewares"
@@ -94,13 +93,6 @@ func (mc *managerController) UpdateManagerById(ctx *fiber.Ctx) error {
 
 	res, err := mc.managerService.UpdateManagerById(ctx.Context(), claims.UserID, requestBody)
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			if pqErr.Code == "23505" { // Unique violation error code
-				return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{
-					"error": err.Error(),
-				})
-			}
-		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
