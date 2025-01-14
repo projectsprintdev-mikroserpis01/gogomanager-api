@@ -85,12 +85,16 @@ func (e employeeService) Delete(
 	ctx context.Context,
 	identityNumber string,
 ) error {
-	identityNumberInt, err := strconv.Atoi(identityNumber)
+	_, err := e.repo.FindByIdentityNumber(ctx, identityNumber)
 	if err != nil {
-		return fiber.NewError(400, fiber.ErrBadRequest.Message)
+		if errors.Is(err, sql.ErrNoRows) {
+			return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("employee with id %s not found", identityNumber))
+		}
+
+		return nil
 	}
 
-	err = e.repo.Delete(ctx, identityNumberInt)
+	err = e.repo.Delete(ctx, identityNumber)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("employee with id %s not found", identityNumber))

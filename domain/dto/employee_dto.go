@@ -21,5 +21,5 @@ type EmployeeUpdateReq struct {
 	Name             string `json:"name,omitempty" validate:"min=4,max=33"`
 	EmployeeImageURI string `json:"employeeImageUri,omitempty" validate:"url"`
 	Gender           string `json:"gender,omitempty" validate:"oneof=male female"`
-	DepartmentID     string `json:"departmentId,omitempty"`
+	DepartmentID     string `json:"departmentId" validate:"required"`
 }

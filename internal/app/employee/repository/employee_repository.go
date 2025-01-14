@@ -20,7 +20,7 @@ const (
 	VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	queryFindBase             = "SELECT * FROM employees WHERE 1=1"
 	queryFindByIdentityNumber = "SELECT * FROM employees WHERE identity_number = $1"
-	queryDelete               = "DELETE FROM employees WHERE id = $1"
+	queryDelete               = "DELETE FROM employees WHERE identity_number = $1"
 	queryUpdate               = `
 		UPDATE employees
 			SET name = $1,
@@ -136,7 +136,7 @@ func (e *employeeRepository) Update(ctx context.Context, data entity.Employee) e
 	return nil
 }
 
-func (e *employeeRepository) Delete(ctx context.Context, id int) error {
+func (e *employeeRepository) Delete(ctx context.Context, id string) error {
 	_, err := e.DB.ExecContext(ctx, queryDelete, id)
 	return err
 }

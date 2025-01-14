@@ -12,7 +12,7 @@ type EmployeeRepository interface {
 	Find(ctx context.Context, identityNumber, name, gender string, departmentID, limit, offset int) ([]*entity.Employee, error)
 	FindByIdentityNumber(ctx context.Context, identityNumber string) (*entity.Employee, error)
 	Update(ctx context.Context, data entity.Employee) error
-	Delete(ctx context.Context, id int) error
+	Delete(ctx context.Context, id string) error
 }
 
 type EmployeeService interface {
