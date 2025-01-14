@@ -1,25 +1,25 @@
 package dto
 
 type EmployeeCreateReq struct {
-	IdentityNumber   string `json:"identity_number" validate:"min=5,max=33,required"`
+	IdentityNumber   string `json:"identityNumber" validate:"min=5,max=33,required"`
 	Name             string `json:"name" validate:"min=4,max=33,required"`
-	EmployeeImageURI string `json:"employee_image_uri" validate:"required,url"`
+	EmployeeImageURI string `json:"employeeImageUri" validate:"required,url"`
 	Gender           string `json:"gender" validate:"oneof=male female,required"`
-	DepartmentID     string `json:"department_id" validate:"required"`
+	DepartmentID     string `json:"departmentId" validate:"required"`
 }
 
 type EmployeeDataRes struct {
-	IdentityNumber   string `json:"identity_number"`
+	IdentityNumber   string `json:"identityNumber"`
 	Name             string `json:"name"`
-	EmployeeImageURI string `json:"employee_image_uri"`
+	EmployeeImageURI string `json:"employeeImageUri"`
 	Gender           string `json:"gender"`
-	DepartmentID     string `json:"department_id"`
+	DepartmentID     string `json:"departmentId"`
 }
 
 type EmployeeUpdateReq struct {
-	IdentityNumber   string `json:"identity_number,omitempty" validate:"min=5,max=33"`
+	IdentityNumber   string `json:"identityNumber,omitempty" validate:"min=5,max=33"`
 	Name             string `json:"name,omitempty" validate:"min=4,max=33"`
-	EmployeeImageURI string `json:"employee_image_uri,omitempty" validate:"url"`
+	EmployeeImageURI string `json:"employeeImageUri,omitempty" validate:"url"`
 	Gender           string `json:"gender,omitempty" validate:"oneof=male female"`
-	DepartmentID     string `json:"department_id,omitempty"`
+	DepartmentID     string `json:"departmentId,omitempty"`
 }
